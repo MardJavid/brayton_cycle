@@ -591,100 +591,167 @@
     }
 
     function buildPvChart(states) {
-      const pts = [...states, states[0]];
-      const data = pts.map(s => ({ x: +s.v.toFixed(5), y: +s.P.toFixed(3) }));
-      const c = chartColors();
-      if (pvChart) {
+    const gamma = parseFloat(document.getElementById('gamma').value);
+
+    const [s1, s2, s3, s4] = states;
+
+    function isentropicCurve(sA, sB, steps = 25) {
+        const C = sA.P * Math.pow(sA.v, gamma);
+        const vStart = sA.v;
+        const vEnd = sB.v;
+
+        const pts = [];
+        for (let i = 0; i <= steps; i++) {
+        const v = vStart + (vEnd - vStart) * (i / steps);
+        const P = C / Math.pow(v, gamma);
+        pts.push({ x: v, y: P });
+        }
+        return pts;
+    }
+
+    function isobaricLine(sA, sB, steps = 25) {
+        const pts = [];
+        for (let i = 0; i <= steps; i++) {
+        const v = sA.v + (sB.v - sA.v) * (i / steps);
+        pts.push({ x: v, y: sA.P });
+        }
+        return pts;
+    }
+
+    // Build full cycle path (clockwise)
+    const data = [
+        ...isentropicCurve(s1, s2),  // compression (curves inward)
+        ...isobaricLine(s2, s3),     // heat addition
+        ...isentropicCurve(s3, s4),  // expansion (curves inward)
+        ...isobaricLine(s4, s1),     // heat rejection
+        { x: s1.v, y: s1.P }         // close loop
+    ];
+
+    const c = chartColors();
+
+    if (pvChart) {
         pvChart.data.datasets[0].data = data;
         pvChart.update('none');
         return;
-      }
-      pvChart = new Chart(document.getElementById('pv-chart'), {
+    }
+
+    pvChart = new Chart(document.getElementById('pv-chart'), {
         type: 'line',
         data: {
-          datasets: [{
-            data,
-            borderColor: '#185FA5',
-            backgroundColor: 'rgba(24,95,165,0.1)',
-            fill: true,
-            tension: 0.35,
-            pointRadius: 5,
-            pointBackgroundColor: '#185FA5',
-            pointBorderColor: isDark() ? '#1e1e1c' : '#fff',
-            pointBorderWidth: 2,
-          }]
+        datasets: [
+            {
+                // cycle curve
+                data,
+                borderColor: '#185FA5',
+                backgroundColor: 'rgba(24,95,165,0.08)',
+                fill: false,
+                pointRadius: 0,   // keep curve clean
+                borderWidth: 2
+            },
+            {
+                // state points (VISIBLE)
+                data: [
+                { x: s1.v, y: s1.P },
+                { x: s2.v, y: s2.P },
+                { x: s3.v, y: s3.P },
+                { x: s4.v, y: s4.P },
+                ],
+                showLine: false,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#185FA5',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2
+            }
+            ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
             x: {
-              type: 'linear',
-              title: { display: true, text: 'Specific volume v (m³/kg)', color: c.text, font: { size: 11 } },
-              ticks: { color: c.text, font: { size: 11 }, callback: v => v.toFixed(3) },
-              grid: { color: c.grid }
+            type: 'linear',
+            title: { display: true, text: 'Specific volume v (m³/kg)', color: c.text, font: { size: 11 } },
+            ticks: { color: c.text, font: { size: 11 }, callback: v => v.toFixed(3) },
+            grid: { color: c.grid }
             },
             y: {
-              title: { display: true, text: 'Pressure P (kPa)', color: c.text, font: { size: 11 } },
-              ticks: { color: c.text, font: { size: 11 } },
-              grid: { color: c.grid }
+            title: { display: true, text: 'Pressure P (kPa)', color: c.text, font: { size: 11 } },
+            ticks: { color: c.text, font: { size: 11 } },
+            grid: { color: c.grid }
             }
-          }
         }
-      });
+        }
+    });
     }
 
     function buildTsChart(states) {
-      const cpVal = parseFloat(document.getElementById('cp').value);
-      const s1 = 0;
-      const s2 = s1;
-      const s3 = s2 + cpVal * Math.log(states[2].T / states[1].T);
-      const s4 = s3;
-      const s0 = s4 + cpVal * Math.log(states[0].T / states[3].T);
-      const sArr = [s1, s2, s3, s4, s0];
-      const tArr = [states[0].T, states[1].T, states[2].T, states[3].T, states[0].T];
-      const data = sArr.map((s, i) => ({ x: +s.toFixed(5), y: +tArr[i].toFixed(2) }));
-      const c = chartColors();
-      if (tsChart) {
+    const cpVal = parseFloat(document.getElementById('cp').value);
+
+    const T1 = states[0].T;
+    const T2 = states[1].T;
+    const T3 = states[2].T;
+    const T4 = states[3].T;
+
+    // guard against invalid math
+    if ([T1, T2, T3, T4].some(t => !isFinite(t) || t <= 0)) return;
+
+    const s1 = 0;
+    const s2 = s1;
+    const s3 = s2 + cpVal * Math.log(T3 / T2);
+    const s4 = s3;
+    const s0 = s4 + cpVal * Math.log(T1 / T4);
+
+    const data = [
+        { x: s1, y: T1 },
+        { x: s2, y: T2 },
+        { x: s3, y: T3 },
+        { x: s4, y: T4 },
+        { x: s0, y: T1 }
+    ];
+
+    const c = chartColors();
+
+    if (tsChart) {
         tsChart.data.datasets[0].data = data;
         tsChart.update('none');
         return;
-      }
-      tsChart = new Chart(document.getElementById('ts-chart'), {
+    }
+
+    tsChart = new Chart(document.getElementById('ts-chart'), {
         type: 'line',
         data: {
-          datasets: [{
+        datasets: [{
             data,
             borderColor: '#0F6E56',
-            backgroundColor: 'rgba(15,110,86,0.1)',
-            fill: true,
-            tension: 0.35,
-            pointRadius: 5,
+            backgroundColor: 'rgba(15,110,86,0.08)',
+            fill: false,
+            pointRadius: 4,
             pointBackgroundColor: '#0F6E56',
-            pointBorderColor: isDark() ? '#1e1e1c' : '#fff',
-            pointBorderWidth: 2,
-          }]
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+        }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
             x: {
-              type: 'linear',
-              title: { display: true, text: 'Entropy s (kJ/kg·K)', color: c.text, font: { size: 11 } },
-              ticks: { color: c.text, font: { size: 11 }, callback: v => v.toFixed(2) },
-              grid: { color: c.grid }
+            type: 'linear',
+            title: { display: true, text: 'Entropy s (kJ/kg·K)', color: c.text, font: { size: 11 } },
+            ticks: { color: c.text, font: { size: 11 }, callback: v => v.toFixed(2) },
+            grid: { color: c.grid }
             },
             y: {
-              title: { display: true, text: 'Temperature T (K)', color: c.text, font: { size: 11 } },
-              ticks: { color: c.text, font: { size: 11 } },
-              grid: { color: c.grid }
+            title: { display: true, text: 'Temperature T (K)', color: c.text, font: { size: 11 } },
+            ticks: { color: c.text, font: { size: 11 } },
+            grid: { color: c.grid }
             }
-          }
         }
-      });
+        }
+    });
     }
 
     function update() {
