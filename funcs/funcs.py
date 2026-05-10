@@ -83,6 +83,9 @@ def getWork(m, cp, T1, T2, T3, T4):
 
     if T3 <= T4:
         raise ValueError("T3 must be greater than T4")
+
+    if T3 <= T2:
+        raise ValueError("T3 must be greater than T2")
     
     Wc   = m * cp * (T2 - T1)               # Compressor work                           (kJ)
     Wt   = m * cp * (T3 - T4)               # Turbine work                              (kJ)
@@ -115,6 +118,9 @@ def getHeat(m, cp, T1, T2, T3, T4, Wc, Wt, Wnet):
 
     if T3 <= T4:
         raise ValueError("T3 must be greater than T4")
+
+    if T3 <= T2:
+        raise ValueError("T3 must be greater than T2")
 
     if Wt <= Wc or Wnet <= 0:
         raise ValueError("Net work must be positive")
