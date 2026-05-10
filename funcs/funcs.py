@@ -25,6 +25,20 @@
 # cp    - Specific heat at constant pressure (kJ / (kg * K))
 # gamma - heat capacity ratio                (dimensionless)
 def getStateVariables(P1, T1, T3, rp, cp, gamma):
+    if P1 <= 0:
+        raise ValueError("Pressure must be more than 0.")
+
+    if T1 <= 0 or T3 <= 0:
+        raise ValueError("Temperature must be more than 0.")
+
+    if rp <= 0:
+        raise ValueError("Pressure ratio must be more than 0.")
+
+    if cp <= 0:
+        raise ValueError("Specific heat must be more than 0.")
+
+    if gamma <= 1:
+        raise ValueError("Gamma must be more than 1.")
 
     P2 = P1 * rp                            # Compressor outlet pressure                (kPa)
     P3 = P2                                 # Turbine inlet pressure                    (kPa)
@@ -55,6 +69,21 @@ def getStateVariables(P1, T1, T3, rp, cp, gamma):
 # T3 - Maximum cycle temperature          (K)
 # T4 - Turbine outlet temperature         (K)
 def getWork(m, cp, T1, T2, T3, T4):    
+    if (m <= 0):
+        raise ValueError("Mass must be more than 0.")
+
+    if cp <= 0:
+        raise ValueError("Specific heat must be more than 0.")
+    
+    if T1 <= 0 or T2 <= 0 or T3 <= 0 or T4 <= 0:
+        raise ValueError("Temperature must be more than 0.")
+
+    if T2 <= T1:
+        raise ValueError("T2 must be greater than T1")
+
+    if T3 <= T4:
+        raise ValueError("T3 must be greater than T4")
+    
     Wc   = m * cp * (T2 - T1)               # Compressor work                           (kJ)
     Wt   = m * cp * (T3 - T4)               # Turbine work                              (kJ)
     Wnet = Wt - Wc                          # Net work                                  (kJ)
@@ -72,6 +101,24 @@ def getWork(m, cp, T1, T2, T3, T4):
 # Wt   - Turbine work                       (kJ)
 # Wnet - Net work                           (kJ)
 def getHeat(m, cp, T1, T2, T3, T4, Wc, Wt, Wnet):
+    if m <= 0:
+        raise ValueError("Mass must be more than zero.")
+
+    if cp <= 0:
+        raise ValueError("Specific heat must be more than 0.")
+
+    if T1 <= 0 or T2 <= 0 or T3 <= 0 or T4 <= 0:
+        raise ValueError("Temperature must be more than 0.")    
+
+    if T2 <= T1:
+        raise ValueError("T2 must be greater than T1")
+
+    if T3 <= T4:
+        raise ValueError("T3 must be greater than T4")
+
+    if Wt <= Wc or Wnet <= 0:
+        raise ValueError("Net work must be positive")
+
     Qin  = m * cp * (T3 - T2)               # Heat added                                (kJ)
     Qout = m * cp * (T4 - T1)               # Heat rejected                             (kJ)
     eta  = Wnet / Qin                       # Thermal efficiency                        (dimensionless)
