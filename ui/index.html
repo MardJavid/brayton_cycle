@@ -59,8 +59,8 @@
       background: var(--bg); color: var(--tx2); cursor: pointer;
       transition: border-color 0.1s, color 0.1s;
     }
-    .preset-btn:hover    { border-color: var(--blue); color: var(--blue); }
-    .preset-btn.active   { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+    .preset-btn:hover  { border-color: var(--blue); color: var(--blue); }
+    .preset-btn.active { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
 
     .layout {
       display: grid;
@@ -87,10 +87,18 @@
     hr.sep { border: none; border-top: 0.5px solid var(--bd); margin: 12px 0; }
 
     .slider-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-    .slider-header { display: flex; justify-content: space-between; align-items: baseline; }
-    .slider-lbl { font-size: 13px; color: var(--tx); }
-    .slider-val { font-size: 13px; font-weight: 500; color: var(--tx); }
-    .slider-unit { font-size: 11px; color: var(--tx2); margin-left: 2px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .slider-lbl  { font-size: 13px; color: var(--tx); flex-shrink: 0; }
+    .slider-unit { font-size: 11px; color: var(--tx2); margin-left: 1px; }
+    .slider-num  {
+      width: 62px; height: 26px;
+      background: var(--bg2); border: 0.5px solid var(--bd2);
+      border-radius: var(--r); color: var(--tx);
+      font-size: 12px; font-weight: 500;
+      padding: 0 6px; text-align: right;
+      flex-shrink: 0;
+    }
+    .slider-num:focus { outline: none; border-color: var(--blue); }
     input[type=range] {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 4px; border-radius: 2px;
@@ -124,10 +132,12 @@
       gap: 4px;
       margin-bottom: 6px;
     }
-    .pt-sym  { font-size: 13px; min-width: 20px; flex-shrink: 0; }
+    .pt-idx  {
+      font-size: 11px; font-weight: 500; color: var(--tx2);
+      min-width: 20px; flex-shrink: 0; text-align: center;
+    }
     .pt-lbl  { font-size: 11px; color: var(--tx2); flex-shrink: 0; }
     .pt-unit { font-size: 10px; color: var(--tx2); flex-shrink: 0; }
-    .pt-spacer { flex: 1; }
 
     .proc-row  { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; padding-left: 2px; }
     .proc-from { font-size: 12px; color: var(--tx2); min-width: 32px; }
@@ -170,9 +180,7 @@
       .error { background: #501313; color: #F09595; border-color: #F09595; }
     }
 
-    .metrics {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     @media (max-width: 700px) { .metrics { grid-template-columns: repeat(2,1fr); } }
     .metric {
       background: var(--bg); border: 0.5px solid var(--bd);
@@ -187,11 +195,7 @@
     @media (max-width: 560px) { .charts { grid-template-columns: 1fr; } }
     .chart-wrap { position: relative; height: 210px; }
 
-    .states-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 8px;
-    }
+    .states-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
     .st-card { background: var(--bg2); border-radius: var(--r); padding: 8px 10px; }
     .st-name {
       font-size: 11px; font-weight: 500; color: var(--tx2);
@@ -222,24 +226,27 @@
     <div class="left-col">
       <div class="card">
         <div class="section-label">Global parameters</div>
+
         <div class="slider-group">
           <div class="slider-header">
-            <span class="slider-lbl">cₚ</span>
-            <span><span class="slider-val" id="disp-cp">1.005</span><span class="slider-unit"> kJ/(kg·K)</span></span>
+            <span class="slider-lbl">cₚ<span class="slider-unit"> kJ/(kg·K)</span></span>
+            <input type="number" class="slider-num" id="num-cp" step="0.005" value="1.005">
           </div>
           <input type="range" id="g-cp" min="0.5" max="2.5" step="0.005" value="1.005">
         </div>
+
         <div class="slider-group">
           <div class="slider-header">
             <span class="slider-lbl">γ</span>
-            <span><span class="slider-val" id="disp-gamma">1.40</span></span>
+            <input type="number" class="slider-num" id="num-gamma" step="0.01" value="1.40">
           </div>
           <input type="range" id="g-gamma" min="1.05" max="1.80" step="0.01" value="1.40">
         </div>
+
         <div class="slider-group">
           <div class="slider-header">
-            <span class="slider-lbl">ṁ</span>
-            <span><span class="slider-val" id="disp-m">1.0</span><span class="slider-unit"> kg/s</span></span>
+            <span class="slider-lbl">ṁ<span class="slider-unit"> kg/s</span></span>
+            <input type="number" class="slider-num" id="num-m" step="0.5" value="1.0">
           </div>
           <input type="range" id="g-m" min="0.5" max="20" step="0.5" value="1">
         </div>
@@ -291,8 +298,6 @@
 </div>
 
 <script>
-  const SYMBOLS = '①②③④⑤⑥⑦⑧⑨';
-
   const PROCESS_TYPES = [
     { id: 'isentropic', label: 'Isentropic', tag: 'work' },
     { id: 'isobaric',   label: 'Isobaric',   tag: 'heat' },
@@ -315,10 +320,8 @@
     otto: {
       get pts() {
         const r=8, g=1.40, T1=300, P1=101, T3=2400;
-        const T2=T1*Math.pow(r,g-1);
-        const P2=P1*Math.pow(r,g);
-        const P3=P2*T3/T2;
-        const T4=T3/Math.pow(r,g-1);
+        const T2=T1*Math.pow(r,g-1), P2=P1*Math.pow(r,g);
+        const P3=P2*T3/T2, T4=T3/Math.pow(r,g-1);
         return [{P:P1,T:T1},{P:P2,T:T2},{P:P3,T:T3},{P:P1,T:T4}];
       },
       ps:['isentropic','isochoric','isentropic','isochoric'],
@@ -327,12 +330,9 @@
     diesel: {
       get pts() {
         const r=18, rc=2, g=1.40, T1=300, P1=101;
-        const T2=T1*Math.pow(r,g-1);
-        const P2=P1*Math.pow(r,g);
-        const T3=T2*rc;
-        const P3=P2;
-        const T4=T3*Math.pow(rc/r,g-1);
-        const P4=P3*Math.pow(rc/r,g);
+        const T2=T1*Math.pow(r,g-1), P2=P1*Math.pow(r,g);
+        const T3=T2*rc, P3=P2;
+        const T4=T3*Math.pow(rc/r,g-1), P4=P3*Math.pow(rc/r,g);
         return [{P:P1,T:T1},{P:P2,T:T2},{P:P3,T:T3},{P:P4,T:T4}];
       },
       ps:['isentropic','isobaric','isentropic','isochoric'],
@@ -350,52 +350,69 @@
     },
   };
 
-  let points = [];
-  let procs  = [];
-  let activePreset = null;
+  let points = [], procs = [], activePreset = null;
   let tsChart, pvChart;
 
-  function loadPreset(name) {
-    const p = PRESETS[name];
-    const rawPts = p.pts;
-    points = rawPts.map(pt => ({ P: pt.P ?? null, T: pt.T ?? null }));
-    procs  = p.ps.map(tp => ({ type: tp, n: tp === 'polytropic' ? 1.3 : null }));
-
-    setSlider('g-cp',    'disp-cp',    p.cp,    3);
-    setSlider('g-gamma', 'disp-gamma', p.gamma, 2);
-    setSlider('g-m',     'disp-m',     p.m,     1);
-
-    activePreset = name;
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('pre-' + name).classList.add('active');
-
-    renderUI();
-  }
-
-  function setSlider(id, dispId, val, dp) {
-    document.getElementById(id).value = val;
-    document.getElementById(dispId).textContent = val.toFixed(dp);
-  }
-
-  const sliderCfg = [
-    { id: 'g-cp',    disp: 'disp-cp',    dp: 3 },
-    { id: 'g-gamma', disp: 'disp-gamma', dp: 2 },
-    { id: 'g-m',     disp: 'disp-m',     dp: 1 },
+  /* ── Slider ↔ number input sync ── */
+  const paramCfg = [
+    { slider: 'g-cp',    num: 'num-cp',    dp: 3 },
+    { slider: 'g-gamma', num: 'num-gamma', dp: 2 },
+    { slider: 'g-m',     num: 'num-m',     dp: 1 },
   ];
-  sliderCfg.forEach(({ id, disp, dp }) => {
-    document.getElementById(id).addEventListener('input', function () {
-      document.getElementById(disp).textContent = parseFloat(this.value).toFixed(dp);
-      clearPreset();
-      update();
+
+  paramCfg.forEach(({ slider, num, dp }) => {
+    const sl = document.getElementById(slider);
+    const ni = document.getElementById(num);
+
+    // Slider → number input (clamped by slider's own min/max)
+    sl.addEventListener('input', () => {
+      ni.value = parseFloat(sl.value).toFixed(dp);
+      clearPreset(); update();
+    });
+
+    // Number input → slider (clamp slider only, not the displayed value)
+    ni.addEventListener('input', () => {
+      const v = parseFloat(ni.value);
+      if (!isFinite(v)) return;
+      // Move slider to nearest valid position without overriding the text field
+      const clamped = Math.min(parseFloat(sl.max), Math.max(parseFloat(sl.min), v));
+      sl.value = clamped;
+      clearPreset(); update();
     });
   });
 
+  function setParam(sliderId, numId, val, dp) {
+    document.getElementById(sliderId).value = val;
+    document.getElementById(numId).value    = val.toFixed(dp);
+  }
+
+  /* ── Presets ── */
+  function loadPreset(name) {
+    const p = PRESETS[name];
+    points = p.pts.map(pt => ({ P: pt.P ?? null, T: pt.T ?? null }));
+    procs  = p.ps.map(tp => ({ type: tp, n: tp === 'polytropic' ? 1.3 : null }));
+    setParam('g-cp',    'num-cp',    p.cp,    3);
+    setParam('g-gamma', 'num-gamma', p.gamma, 2);
+    setParam('g-m',     'num-m',     p.m,     1);
+    activePreset = name;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pre-' + name).classList.add('active');
+    renderUI();
+  }
+
+  function clearPreset() {
+    if (!activePreset) return;
+    activePreset = null;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  }
+
+  /* ── UI rendering ── */
   function renderUI() { renderPoints(); renderProcs(); update(); }
 
   function renderPoints() {
     document.getElementById('points-list').innerHTML = points.map((pt, i) => `
       <div class="point-row">
-        <span class="pt-sym">${SYMBOLS[i]}</span>
+        <span class="pt-idx">${i + 1}</span>
         <span class="pt-lbl">P</span>
         <input type="number" value="${pt.P != null ? pt.P.toFixed(1) : ''}" placeholder="auto" style="width:72px"
           oninput="points[${i}].P = this.value==='' ? null : +this.value; clearPreset(); update()">
@@ -432,27 +449,19 @@
     update();
   }
 
-  function clearPreset() {
-    if (!activePreset) return;
-    activePreset = null;
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  }
-
   function addPoint() {
     points.push({ P: null, T: null });
     procs.push({ type: 'isobaric', n: null });
-    clearPreset();
-    renderUI();
+    clearPreset(); renderUI();
   }
 
   function removePoint(i) {
     if (points.length <= 2) return;
-    points.splice(i, 1);
-    procs.splice(i, 1);
-    clearPreset();
-    renderUI();
+    points.splice(i, 1); procs.splice(i, 1);
+    clearPreset(); renderUI();
   }
 
+  /* ── Physics ── */
   function getR(cp, gamma) { return (gamma - 1) * cp / gamma; }
 
   function solveStates(cp, gamma) {
@@ -460,265 +469,262 @@
     const s = points.map(p => ({ P: p.P != null ? +p.P : null, T: p.T != null ? +p.T : null, v: null }));
 
     function fwd(i) {
-      const j = (i+1)%n, f = s[i], t = s[j];
-      const tp = procs[i].type, pn = procs[i].n ?? 1.3;
-      if (!f.P || !f.T) return;
-      if (tp === 'isentropic') {
-        if (t.P != null && t.T == null) t.T = f.T * Math.pow(t.P/f.P, (gamma-1)/gamma);
-        if (t.T != null && t.P == null) t.P = f.P * Math.pow(t.T/f.T, gamma/(gamma-1));
-      } else if (tp === 'isobaric') {
-        if (t.P == null) t.P = f.P;
-      } else if (tp === 'isochoric') {
-        if (t.T != null && t.P == null) t.P = f.P * t.T / f.T;
-        if (t.P != null && t.T == null) t.T = f.T * t.P / f.P;
-      } else if (tp === 'isothermal') {
-        if (t.T == null) t.T = f.T;
-        if (t.P == null && f.P != null) t.P = f.P;
-      } else if (tp === 'polytropic') {
-        if (t.P != null && t.T == null) t.T = f.T * Math.pow(t.P/f.P, (pn-1)/pn);
-        if (t.T != null && t.P == null) t.P = f.P * Math.pow(t.T/f.T, pn/(pn-1));
+      const j=(i+1)%n, f=s[i], t=s[j], tp=procs[i].type, pn=procs[i].n??1.3;
+      if (!f.P||!f.T) return;
+      if (tp==='isentropic') {
+        if (t.P!=null&&t.T==null) t.T=f.T*Math.pow(t.P/f.P,(gamma-1)/gamma);
+        if (t.T!=null&&t.P==null) t.P=f.P*Math.pow(t.T/f.T,gamma/(gamma-1));
+      } else if (tp==='isobaric') {
+        if (t.P==null) t.P=f.P;
+      } else if (tp==='isochoric') {
+        if (t.T!=null&&t.P==null) t.P=f.P*t.T/f.T;
+        if (t.P!=null&&t.T==null) t.T=f.T*t.P/f.P;
+      } else if (tp==='isothermal') {
+        if (t.T==null) t.T=f.T;
+        if (t.P==null) t.P=f.P;
+      } else if (tp==='polytropic') {
+        if (t.P!=null&&t.T==null) t.T=f.T*Math.pow(t.P/f.P,(pn-1)/pn);
+        if (t.T!=null&&t.P==null) t.P=f.P*Math.pow(t.T/f.T,pn/(pn-1));
       }
     }
 
     function bwd(i) {
-      const j = (i+1)%n, f = s[i], t = s[j];
-      const tp = procs[i].type, pn = procs[i].n ?? 1.3;
-      if (!t.P || !t.T) return;
-      if (tp === 'isentropic') {
-        if (f.P != null && f.T == null) f.T = t.T / Math.pow(t.P/f.P, (gamma-1)/gamma);
-        if (f.T != null && f.P == null) f.P = t.P / Math.pow(t.T/f.T, gamma/(gamma-1));
-      } else if (tp === 'isobaric') {
-        if (f.P == null) f.P = t.P;
-      } else if (tp === 'isochoric') {
-        if (f.T != null && f.P == null) f.P = t.P * f.T / t.T;
-        if (f.P != null && f.T == null) f.T = f.P * t.T / t.P;
-      } else if (tp === 'isothermal') {
-        if (f.T == null) f.T = t.T;
-      } else if (tp === 'polytropic') {
-        if (f.P != null && f.T == null) f.T = t.T / Math.pow(t.P/f.P, (pn-1)/pn);
-        if (f.T != null && f.P == null) f.P = t.P / Math.pow(t.T/f.T, pn/(pn-1));
+      const j=(i+1)%n, f=s[i], t=s[j], tp=procs[i].type, pn=procs[i].n??1.3;
+      if (!t.P||!t.T) return;
+      if (tp==='isentropic') {
+        if (f.P!=null&&f.T==null) f.T=t.T/Math.pow(t.P/f.P,(gamma-1)/gamma);
+        if (f.T!=null&&f.P==null) f.P=t.P/Math.pow(t.T/f.T,gamma/(gamma-1));
+      } else if (tp==='isobaric') {
+        if (f.P==null) f.P=t.P;
+      } else if (tp==='isochoric') {
+        if (f.T!=null&&f.P==null) f.P=t.P*f.T/t.T;
+        if (f.P!=null&&f.T==null) f.T=f.P*t.T/t.P;
+      } else if (tp==='isothermal') {
+        if (f.T==null) f.T=t.T;
+      } else if (tp==='polytropic') {
+        if (f.P!=null&&f.T==null) f.T=t.T/Math.pow(t.P/f.P,(pn-1)/pn);
+        if (f.T!=null&&f.P==null) f.P=t.P/Math.pow(t.T/f.T,pn/(pn-1));
       }
     }
 
-    for (let it = 0; it < 20; it++) {
-      for (let i = 0; i < n; i++) fwd(i);
-      for (let i = n-1; i >= 0; i--) bwd(i);
+    for (let it=0; it<20; it++) {
+      for (let i=0; i<n; i++) fwd(i);
+      for (let i=n-1; i>=0; i--) bwd(i);
     }
-
-    const R = getR(cp, gamma);
-    for (let i = 0; i < n; i++) {
-      if (s[i].P != null && s[i].T != null) s[i].v = R * s[i].T / s[i].P;
-    }
+    const R=getR(cp,gamma);
+    for (let i=0; i<n; i++)
+      if (s[i].P!=null&&s[i].T!=null) s[i].v=R*s[i].T/s[i].P;
     return s;
   }
 
   function computeHeatWork(states, cp, gamma, m) {
-    const n = states.length;
-    const R = getR(cp, gamma);
+    const n=states.length, R=getR(cp,gamma);
     let Qin=0, Qout=0, Wt=0, Wc=0;
-
-    for (let i = 0; i < n; i++) {
-      const j = (i+1)%n;
-      const si=states[i], sj=states[j];
-      const tp=procs[i].type, pn=procs[i].n??1.3;
+    for (let i=0; i<n; i++) {
+      const j=(i+1)%n, si=states[i], sj=states[j], tp=procs[i].type, pn=procs[i].n??1.3;
       if (si.T==null||sj.T==null) continue;
-      const dT = sj.T - si.T;
-      let q=0, w=0;
-
-      if (tp==='isentropic') {
-        w = m * cp * dT;
-      } else if (tp==='isobaric') {
-        q = m * cp * dT;
-      } else if (tp==='isochoric') {
-        q = m * (cp - R) * dT;
-      } else if (tp==='isothermal') {
-        if (si.P!=null&&sj.P!=null&&si.P>0&&sj.P>0) {
-          w = -m * R * si.T * Math.log(sj.P/si.P);
-          q = w;
-        }
-      } else if (tp==='polytropic') {
-        w = m * R * dT / (1 - pn);
-        q = m * (cp - pn * R / (pn-1)) * dT;
-      }
-
-      if (q > 0) Qin  += q; else Qout += Math.abs(q);
-      if (w < 0) Wc   += Math.abs(w);
-      else        Wt   += w;
+      const dT=sj.T-si.T; let q=0, w=0;
+      if (tp==='isentropic')      w=m*cp*dT;
+      else if (tp==='isobaric')   q=m*cp*dT;
+      else if (tp==='isochoric')  q=m*(cp-R)*dT;
+      else if (tp==='isothermal'&&si.P!=null&&sj.P!=null&&si.P>0&&sj.P>0) { w=-m*R*si.T*Math.log(sj.P/si.P); q=w; }
+      else if (tp==='polytropic') { w=m*R*dT/(1-pn); q=m*(cp-pn*R/(pn-1))*dT; }
+      if (q>0) Qin+=q; else Qout+=Math.abs(q);
+      if (w<0) Wc+=Math.abs(w); else Wt+=w;
     }
-
-    const Wnet = Qin - Qout;
-    const eta  = Qin > 0 ? Wnet / Qin : 0;
-    const bwr  = Wt  > 0 ? Wc / Wt    : 0;
+    const Wnet=Qin-Qout, eta=Qin>0?Wnet/Qin:0, bwr=Wt>0?Wc/Wt:0;
     return { Qin, Qout, Wnet, Wt, Wc, eta, bwr };
   }
 
-  function getTsPoints(states, cp, gamma) {
-    const n=states.length, R=getR(cp,gamma), pts=[];
-    let s=0;
-    for (let i=0;i<n;i++) {
-      const j=(i+1)%n, si=states[i], sj=states[j];
-      const tp=procs[i].type, steps=24;
-      if (si.T==null||sj.T==null) continue;
-      pts.push({x:s,y:si.T});
-      if (tp==='isentropic') {
-        pts.push({x:s,y:sj.T});
-      } else if (tp==='polytropic') {
-        const pn=procs[i].n??1.3;
-        const cv=cp-R;
-        const ds=cv*(pn-gamma)/(pn-1)*Math.log(sj.T/si.T);
-        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T+(sj.T-si.T)*k/steps});
-        s+=ds;
-      } else if (tp==='isobaric') {
-        const ds=cp*Math.log(sj.T/si.T);
-        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T+(sj.T-si.T)*k/steps});
-        s+=ds;
-      } else if (tp==='isochoric') {
-        const ds=(cp-R)*Math.log(sj.T/si.T);
-        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T+(sj.T-si.T)*k/steps});
-        s+=ds;
-      } else if (tp==='isothermal'&&si.P!=null&&sj.P!=null&&si.P>0&&sj.P>0) {
-        const ds=-R*Math.log(sj.P/si.P);
-        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T});
-        s+=ds;
+  /* ── T-s diagram helpers ──
+     Strategy: compute the entropy of each state point relative to state 1,
+     then draw each process segment between the known s values.
+     This avoids the running-accumulator mismatch that caused line/dot gaps.
+  */
+  function computeEntropyOffsets(states, cp, gamma) {
+    const n = states.length;
+    const R = getR(cp, gamma);
+    // sOff[i] = specific entropy of state i relative to state 1 (kJ/kg·K)
+    const sOff = new Array(n).fill(null);
+    sOff[0] = 0;
+
+    function dsForward(i) {
+      const j = (i+1)%n, si = states[i], sj = states[j], tp = procs[i].type, pn = procs[i].n ?? 1.3;
+      if (si.T == null || sj.T == null) return null;
+      if (tp === 'isentropic')  return 0;
+      if (tp === 'isobaric')    return si.T > 0 && sj.T > 0 ? cp * Math.log(sj.T / si.T) : null;
+      if (tp === 'isochoric')   return si.T > 0 && sj.T > 0 ? (cp - R) * Math.log(sj.T / si.T) : null;
+      if (tp === 'isothermal')  return (si.P != null && sj.P != null && si.P > 0 && sj.P > 0) ? -R * Math.log(sj.P / si.P) : null;
+      if (tp === 'polytropic')  return si.T > 0 && sj.T > 0 ? (cp - R) * (pn - gamma) / (pn - 1) * Math.log(sj.T / si.T) : null;
+      return null;
+    }
+
+    // Forward pass: fill from state 0 onward
+    for (let i = 0; i < n - 1; i++) {
+      if (sOff[i] === null) break;
+      const ds = dsForward(i);
+      if (ds !== null) sOff[i+1] = sOff[i] + ds;
+    }
+    // If any still null, try backward from whatever is known
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let i = 0; i < n; i++) {
+        const j = (i+1) % n;
+        if (sOff[i] !== null && sOff[j] === null) {
+          const ds = dsForward(i);
+          if (ds !== null) { sOff[j] = sOff[i] + ds; changed = true; }
+        }
+        if (sOff[j] !== null && sOff[i] === null) {
+          const ds = dsForward(i);
+          if (ds !== null) { sOff[i] = sOff[j] - ds; changed = true; }
+        }
       }
     }
-    if (pts.length) pts.push({...pts[0]});
-    return pts;
+    return sOff;
   }
 
-  function getTsDots(states, cp, gamma) {
-    const n=states.length, R=getR(cp,gamma), dots=[];
-    let s=0;
-    for (let i=0;i<n;i++) {
-      const j=(i+1)%n, si=states[i], sj=states[j], tp=procs[i].type;
-      if (si.T==null) continue;
-      dots.push({x:s,y:si.T});
-      if (sj.T==null) continue;
-      if (tp==='isobaric')  s+=cp*Math.log(sj.T/si.T);
-      else if (tp==='isochoric') s+=(cp-R)*Math.log(sj.T/si.T);
-      else if (tp==='isothermal'&&si.P!=null&&sj.P!=null&&si.P>0&&sj.P>0) s+=-R*Math.log(sj.P/si.P);
-      else if (tp==='polytropic'&&si.T>0&&sj.T>0) {
-        const pn=procs[i].n??1.3;
-        s+=(cp-R)*(pn-gamma)/(pn-1)*Math.log(sj.T/si.T);
+  function getTsData(states, cp, gamma) {
+    const n = states.length;
+    const R = getR(cp, gamma);
+    const sOff = computeEntropyOffsets(states, cp, gamma);
+    const STEPS = 30;
+    const linePts = [];  // for the curve
+    const dotPts  = [];  // for the state markers
+
+    for (let i = 0; i < n; i++) {
+      const j = (i+1) % n;
+      const si = states[i], sj = states[j];
+      const s0 = sOff[i], s1 = sOff[j];
+      const tp = procs[i].type, pn = procs[i].n ?? 1.3;
+
+      if (si.T == null || sj.T == null || s0 === null || s1 === null) continue;
+
+      // Push the starting dot for this state
+      if (i === 0) dotPts.push({ x: s0, y: si.T });
+
+      if (tp === 'isentropic') {
+        // Vertical line: s is constant, T changes
+        linePts.push({ x: s0, y: si.T });
+        linePts.push({ x: s0, y: sj.T });   // s0 === s1 for isentropic
+      } else {
+        // Interpolate along the process curve
+        for (let k = 0; k <= STEPS; k++) {
+          const frac = k / STEPS;
+          const s = s0 + (s1 - s0) * frac;
+          // Reconstruct T at this entropy fraction
+          let T;
+          if (tp === 'isothermal') {
+            T = si.T;
+          } else {
+            // Linear T interpolation is fine for display (curves are monotone in T vs s)
+            T = si.T + (sj.T - si.T) * frac;
+          }
+          linePts.push({ x: s, y: T });
+        }
       }
+
+      // Push the ending dot (= starting dot of next state)
+      dotPts.push({ x: s1, y: sj.T });
     }
-    return dots;
+
+    // Close the line back to state 1's position
+    if (linePts.length > 0) {
+      linePts.push({ x: sOff[0], y: states[0].T });
+    }
+
+    return { linePts, dotPts };
   }
 
   function getPvPoints(states, gamma) {
     const n=states.length, pts=[];
-    for (let i=0;i<n;i++) {
-      const j=(i+1)%n, si=states[i], sj=states[j];
-      const tp=procs[i].type, pn=procs[i].n??1.3, steps=24;
+    for (let i=0; i<n; i++) {
+      const j=(i+1)%n, si=states[i], sj=states[j], tp=procs[i].type, pn=procs[i].n??1.3, steps=30;
       if (si.v==null||sj.v==null||si.P==null||sj.P==null) continue;
       pts.push({x:si.v,y:si.P});
       if (tp==='isentropic'||tp==='polytropic') {
         const exp=tp==='isentropic'?gamma:pn, C=si.P*Math.pow(si.v,exp);
-        for (let k=1;k<=steps;k++) {
-          const v=si.v+(sj.v-si.v)*k/steps;
-          pts.push({x:v, y:C/Math.pow(v,exp)});
-        }
+        for (let k=1;k<=steps;k++) { const v=si.v+(sj.v-si.v)*k/steps; pts.push({x:v,y:C/Math.pow(v,exp)}); }
       } else if (tp==='isobaric') {
-        for (let k=1;k<=steps;k++) pts.push({x:si.v+(sj.v-si.v)*k/steps, y:si.P});
+        for (let k=1;k<=steps;k++) pts.push({x:si.v+(sj.v-si.v)*k/steps,y:si.P});
       } else if (tp==='isochoric') {
-        for (let k=1;k<=steps;k++) pts.push({x:si.v, y:si.P+(sj.P-si.P)*k/steps});
+        for (let k=1;k<=steps;k++) pts.push({x:si.v,y:si.P+(sj.P-si.P)*k/steps});
       } else if (tp==='isothermal') {
         const C=si.P*si.v;
-        for (let k=1;k<=steps;k++) {
-          const v=si.v+(sj.v-si.v)*k/steps;
-          pts.push({x:v, y:C/v});
-        }
+        for (let k=1;k<=steps;k++) { const v=si.v+(sj.v-si.v)*k/steps; pts.push({x:v,y:C/v}); }
       }
     }
-    if (pts.length) pts.push({...pts[0]});
+    // Close cycle
+    if (pts.length > 0) pts.push({ x: pts[0].x, y: pts[0].y });
     return pts;
   }
 
+  /* ── Charts ── */
   const isDark = () => matchMedia('(prefers-color-scheme:dark)').matches;
-  const gc     = () => ({
-    text: isDark() ? '#9a9992' : '#6b6a65',
-    grid: isDark() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
+  const gc = () => ({
+    text: isDark()?'#9a9992':'#6b6a65',
+    grid: isDark()?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)',
   });
 
   function initCharts() {
-    const c = gc();
-    const scaleOpts = (xLbl, yLbl, xDp, yDp) => ({
-      responsive: true, maintainAspectRatio: false, animation: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { type:'linear',
-          title: { display:true, text:xLbl, color:c.text, font:{size:11} },
-          ticks: { color:c.text, font:{size:10}, callback: v=>v.toFixed(xDp) },
-          grid:  { color:c.grid }
-        },
-        y: {
-          title: { display:true, text:yLbl, color:c.text, font:{size:11} },
-          ticks: { color:c.text, font:{size:10}, callback: v=>v.toFixed(yDp) },
-          grid:  { color:c.grid }
-        }
+    const c=gc();
+    const scaleOpts=(xLbl,yLbl,xDp,yDp)=>({
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{type:'linear',title:{display:true,text:xLbl,color:c.text,font:{size:11}},ticks:{color:c.text,font:{size:10},callback:v=>v.toFixed(xDp)},grid:{color:c.grid}},
+        y:{title:{display:true,text:yLbl,color:c.text,font:{size:11}},ticks:{color:c.text,font:{size:10},callback:v=>v.toFixed(yDp)},grid:{color:c.grid}}
       }
     });
-
-    tsChart = new Chart(document.getElementById('ts-chart'), {
-      type: 'line',
-      data: { datasets: [
-        { data:[], borderColor:'#0F6E56', borderWidth:2, pointRadius:0, fill:false },
-        { data:[], showLine:false, pointRadius:5, pointBackgroundColor:'#0F6E56', pointBorderColor:'#fff', pointBorderWidth:2 }
-      ]},
-      options: scaleOpts('Entropy s (kJ/kg·K)', 'Temperature T (K)', 2, 0)
-    });
-
-    pvChart = new Chart(document.getElementById('pv-chart'), {
-      type: 'line',
-      data: { datasets: [
-        { data:[], borderColor:'#185FA5', borderWidth:2, pointRadius:0, fill:false },
-        { data:[], showLine:false, pointRadius:5, pointBackgroundColor:'#185FA5', pointBorderColor:'#fff', pointBorderWidth:2 }
-      ]},
-      options: scaleOpts('Specific volume v (m³/kg)', 'Pressure P (kPa)', 3, 0)
-    });
+    tsChart=new Chart(document.getElementById('ts-chart'),{type:'line',data:{datasets:[
+      {data:[],borderColor:'#0F6E56',borderWidth:2,pointRadius:0,fill:false,tension:0},
+      {data:[],showLine:false,pointRadius:5,pointBackgroundColor:'#0F6E56',pointBorderColor:'#fff',pointBorderWidth:2}
+    ]},options:scaleOpts('Entropy s (kJ/kg·K)','Temperature T (K)',2,0)});
+    pvChart=new Chart(document.getElementById('pv-chart'),{type:'line',data:{datasets:[
+      {data:[],borderColor:'#185FA5',borderWidth:2,pointRadius:0,fill:false,tension:0},
+      {data:[],showLine:false,pointRadius:5,pointBackgroundColor:'#185FA5',pointBorderColor:'#fff',pointBorderWidth:2}
+    ]},options:scaleOpts('Specific volume v (m³/kg)','Pressure P (kPa)',3,0)});
   }
 
+  /* ── Main update ── */
   function update() {
-    const cp    = parseFloat(document.getElementById('g-cp').value);
-    const gamma = parseFloat(document.getElementById('g-gamma').value);
-    const m     = parseFloat(document.getElementById('g-m').value);
-    const err   = document.getElementById('error');
+    // Read cp/gamma from the number input directly so out-of-slider-range values work
+    const cp    = parseFloat(document.getElementById('num-cp').value);
+    const gamma = parseFloat(document.getElementById('num-gamma').value);
+    const m     = parseFloat(document.getElementById('num-m').value);
+    const err=document.getElementById('error');
     if (!isFinite(cp)||!isFinite(gamma)||!isFinite(m)) return;
 
     let states;
-    try { states = solveStates(cp, gamma); }
+    try { states=solveStates(cp,gamma); }
     catch(e) { err.style.display='block'; err.textContent='⚠ '+e.message; return; }
 
-    const unsolved = states.filter(s => s.P==null||s.T==null);
+    const unsolved=states.filter(s=>s.P==null||s.T==null);
     if (unsolved.length) {
       err.style.display='block';
       err.textContent=`⚠ Could not fully solve — ${unsolved.length} state point(s) undetermined. Specify more P or T values.`;
-    } else {
-      err.style.display='none';
-    }
+    } else { err.style.display='none'; }
 
-    const { Qin, Qout, Wnet, Wt, Wc, eta, bwr } = computeHeatWork(states, cp, gamma, m);
-    const fmt = (v, dp=1, unit='') => isFinite(v) ? v.toFixed(dp)+(unit?' '+unit:'') : '—';
+    const {Qin,Qout,Wnet,Wt,Wc,eta,bwr}=computeHeatWork(states,cp,gamma,m);
+    const fmt=(v,dp=1,unit='')=>isFinite(v)?v.toFixed(dp)+(unit?' '+unit:''):'—';
+    document.getElementById('r-Wnet').textContent=fmt(Wnet,1,'kJ');
+    document.getElementById('r-eta').textContent=isFinite(eta)?(eta*100).toFixed(2)+'%':'—';
+    document.getElementById('r-Qin').textContent=fmt(Qin,1,'kJ');
+    document.getElementById('r-Qout').textContent=fmt(Qout,1,'kJ');
+    document.getElementById('r-Wt').textContent=fmt(Wt,1,'kJ');
+    document.getElementById('r-Wc').textContent=fmt(Wc,1,'kJ');
+    document.getElementById('r-bwr').textContent=isFinite(bwr)?(bwr*100).toFixed(1)+'%':'—';
+    document.getElementById('r-pts').textContent=points.length;
 
-    document.getElementById('r-Wnet').textContent = fmt(Wnet,1,'kJ');
-    document.getElementById('r-eta').textContent  = isFinite(eta) ? (eta*100).toFixed(2)+'%' : '—';
-    document.getElementById('r-Qin').textContent  = fmt(Qin,1,'kJ');
-    document.getElementById('r-Qout').textContent = fmt(Qout,1,'kJ');
-    document.getElementById('r-Wt').textContent   = fmt(Wt,1,'kJ');
-    document.getElementById('r-Wc').textContent   = fmt(Wc,1,'kJ');
-    document.getElementById('r-bwr').textContent  = isFinite(bwr) ? (bwr*100).toFixed(1)+'%' : '—';
-    document.getElementById('r-pts').textContent  = points.length;
-
-    document.getElementById('states-output').innerHTML = states.map((s,i) => `
+    document.getElementById('states-output').innerHTML=states.map((s,i)=>`
       <div class="st-card">
-        <div class="st-name">${SYMBOLS[i]} State ${i+1}</div>
+        <div class="st-name">State ${i+1}</div>
         <div class="st-row"><span>P =</span> ${s.P!=null?s.P.toFixed(1)+' kPa':'—'}</div>
         <div class="st-row"><span>T =</span> ${s.T!=null?s.T.toFixed(1)+' K':'—'}</div>
         <div class="st-row"><span>v =</span> ${s.v!=null?s.v.toFixed(4)+' m³/kg':'—'}</div>
       </div>`).join('');
 
-    const tsPts  = getTsPoints(states, cp, gamma);
-    const tsDots = getTsDots(states, cp, gamma);
+    const { linePts: tsPts, dotPts: tsDots } = getTsData(states, cp, gamma);
     tsChart.data.datasets[0].data = tsPts;
     tsChart.data.datasets[1].data = tsDots;
     tsChart.update('none');
