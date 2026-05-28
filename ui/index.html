@@ -3,812 +3,735 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Brayton Cycle Calculator</title>
+  <title>Thermodynamic Cycle Calculator</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f5f4f0;
-      --bg-tertiary: #eeede8;
-      --text-primary: #1a1a18;
-      --text-secondary: #6b6a65;
-      --border: rgba(0,0,0,0.12);
-      --border-med: rgba(0,0,0,0.2);
-      --accent-blue: #185FA5;
-      --accent-blue-bg: #E6F1FB;
-      --accent-teal: #0F6E56;
-      --accent-teal-bg: #E1F5EE;
-      --danger: #A32D2D;
-      --danger-bg: #FCEBEB;
-      --radius-md: 8px;
-      --radius-lg: 12px;
+      --bg: #ffffff;
+      --bg2: #f5f4f0;
+      --bg3: #eeede8;
+      --tx: #1a1a18;
+      --tx2: #6b6a65;
+      --bd: rgba(0,0,0,0.12);
+      --bd2: rgba(0,0,0,0.2);
+      --blue: #185FA5;
+      --blue-bg: #E6F1FB;
+      --teal: #0F6E56;
+      --red: #A32D2D;
+      --r: 8px;
+      --rl: 12px;
     }
-
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg-primary: #1e1e1c;
-        --bg-secondary: #2a2a27;
-        --bg-tertiary: #242422;
-        --text-primary: #f0efe8;
-        --text-secondary: #9a9992;
-        --border: rgba(255,255,255,0.1);
-        --border-med: rgba(255,255,255,0.2);
-        --accent-blue: #85B7EB;
-        --accent-blue-bg: #0C447C;
-        --accent-teal: #5DCAA5;
-        --accent-teal-bg: #085041;
-        --danger: #F09595;
-        --danger-bg: #501313;
+        --bg: #1e1e1c;
+        --bg2: #2a2a27;
+        --bg3: #242422;
+        --tx: #f0efe8;
+        --tx2: #9a9992;
+        --bd: rgba(255,255,255,0.1);
+        --bd2: rgba(255,255,255,0.2);
+        --blue: #85B7EB;
+        --blue-bg: #0C447C;
+        --teal: #5DCAA5;
+        --red: #F09595;
       }
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
+      color: var(--tx);
+      background: var(--bg3);
       min-height: 100vh;
       padding: 2rem 1rem;
-      line-height: 1.6;
+      line-height: 1.5;
     }
+    .page { max-width: 1100px; margin: 0 auto; }
+    header { margin-bottom: 1.25rem; }
+    header h1 { font-size: 24px; font-weight: 500; margin-bottom: 4px; }
+    header p  { font-size: 14px; color: var(--tx2); }
 
-    .page-wrapper {
-      max-width: 1100px;
-      margin: 0 auto;
+    .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+    .preset-label { font-size: 12px; color: var(--tx2); white-space: nowrap; }
+    .preset-btn {
+      font-size: 12px; padding: 4px 12px;
+      border: 0.5px solid var(--bd2); border-radius: var(--r);
+      background: var(--bg); color: var(--tx2); cursor: pointer;
+      transition: border-color 0.1s, color 0.1s;
     }
-
-    header {
-      margin-bottom: 2rem;
-    }
-
-    header h1 {
-      font-size: 26px;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    header p {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
+    .preset-btn:hover    { border-color: var(--blue); color: var(--blue); }
+    .preset-btn.active   { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
 
     .layout {
       display: grid;
       grid-template-columns: 300px minmax(0, 1fr);
-      gap: 1.5rem;
+      gap: 12px;
       align-items: start;
     }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
 
-    @media (max-width: 720px) {
-      .layout { grid-template-columns: 1fr; }
+    .left-col { display: flex; flex-direction: column; gap: 12px; }
+
+    .card {
+      background: var(--bg);
+      border: 0.5px solid var(--bd);
+      border-radius: var(--rl);
+      padding: 1rem 1.25rem;
     }
-
-    /* Controls panel */
-    .controls-panel {
-      background: var(--bg-primary);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .section-label {
+      font-size: 11px; font-weight: 500; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--tx2);
+      padding-bottom: 8px; border-bottom: 0.5px solid var(--bd);
+      margin-bottom: 10px;
     }
+    hr.sep { border: none; border-top: 0.5px solid var(--bd); margin: 12px 0; }
 
-    .panel-title {
-      font-size: 12px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-secondary);
-      padding-bottom: 8px;
-      border-bottom: 0.5px solid var(--border);
-      margin-bottom: 2px;
-    }
-
-    .slider-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .slider-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-    }
-
-    .slider-label {
-      font-size: 13px;
-      color: var(--text-primary);
-    }
-
-    .slider-readout {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .slider-unit {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-left: 2px;
-    }
-
+    .slider-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .slider-lbl { font-size: 13px; color: var(--tx); }
+    .slider-val { font-size: 13px; font-weight: 500; color: var(--tx); }
+    .slider-unit { font-size: 11px; color: var(--tx2); margin-left: 2px; }
     input[type=range] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 4px;
-      border-radius: 2px;
-      background: var(--bg-tertiary);
-      outline: none;
-      cursor: pointer;
-      border: 0.5px solid var(--border);
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 4px; border-radius: 2px;
+      background: var(--bg3); outline: none; cursor: pointer;
+      border: 0.5px solid var(--bd);
     }
-
     input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--accent-blue);
-      border: 2px solid var(--bg-primary);
-      box-shadow: 0 0 0 1px var(--border-med);
-      cursor: pointer;
-      transition: transform 0.1s;
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--blue); border: 2px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--bd2); cursor: pointer;
     }
-
-    input[type=range]::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
-    }
-
     input[type=range]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--accent-blue);
-      border: 2px solid var(--bg-primary);
-      cursor: pointer;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--blue); border: 2px solid var(--bg); cursor: pointer;
     }
 
-    /* Results */
-    .results {
+    select, input[type=number] {
+      background: var(--bg2);
+      border: 0.5px solid var(--bd2);
+      border-radius: var(--r);
+      color: var(--tx);
+      font-size: 13px;
+      padding: 4px 8px;
+      height: 30px;
+    }
+
+    .point-row {
       display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .pt-sym  { font-size: 13px; min-width: 20px; flex-shrink: 0; }
+    .pt-lbl  { font-size: 11px; color: var(--tx2); flex-shrink: 0; }
+    .pt-unit { font-size: 10px; color: var(--tx2); flex-shrink: 0; }
+    .pt-spacer { flex: 1; }
+
+    .proc-row  { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; padding-left: 2px; }
+    .proc-from { font-size: 12px; color: var(--tx2); min-width: 32px; }
+
+    .add-btn {
+      border: 0.5px solid var(--bd2); border-radius: var(--r);
+      background: var(--bg2); color: var(--tx);
+      font-size: 12px; padding: 4px 10px; cursor: pointer;
+      height: 28px; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .del-btn {
+      border: none; border-radius: var(--r);
+      background: transparent; color: var(--red);
+      font-size: 14px; padding: 0 2px; cursor: pointer;
+      height: 28px; display: inline-flex; align-items: center;
+      flex-shrink: 0;
+    }
+    .del-btn:hover { background: rgba(163,45,45,0.08); }
+
+    .tag {
+      display: inline-block; font-size: 10px; padding: 2px 5px;
+      border-radius: 4px; font-weight: 500;
+    }
+    .tag.work { background: #E6F1FB; color: #0C447C; }
+    .tag.heat { background: #FAEEDA; color: #854F0B; }
+    .tag.both { background: #E1F5EE; color: #085041; }
+    @media (prefers-color-scheme: dark) {
+      .tag.work { background: #0C447C; color: #85B7EB; }
+      .tag.heat { background: #633806; color: #FAC775; }
+      .tag.both { background: #085041; color: #5DCAA5; }
+    }
+
+    .right-col { display: flex; flex-direction: column; gap: 12px; }
+
+    .error {
+      background: #FCEBEB; border: 0.5px solid #A32D2D; border-radius: var(--r);
+      padding: 10px 14px; font-size: 13px; color: #A32D2D; display: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .error { background: #501313; color: #F09595; border-color: #F09595; }
     }
 
     .metrics {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
     }
-
-    @media (max-width: 900px) {
-      .metrics { grid-template-columns: repeat(2, 1fr); }
-    }
-
+    @media (max-width: 700px) { .metrics { grid-template-columns: repeat(2,1fr); } }
     .metric {
-      background: var(--bg-primary);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 10px 14px;
+      background: var(--bg); border: 0.5px solid var(--bd);
+      border-radius: var(--r); padding: 8px 12px;
     }
+    .mlabel { font-size: 11px; color: var(--tx2); margin-bottom: 2px; }
+    .mval   { font-size: 20px; font-weight: 500; color: var(--tx); }
+    .mval.blue { color: var(--blue); }
+    .mval.teal { color: var(--teal); }
 
-    .metric-label {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
-    }
-
-    .metric-value {
-      font-size: 20px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .metric-unit {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-left: 2px;
-    }
-
-    .metric.blue .metric-value { color: var(--accent-blue); }
-    .metric.teal .metric-value { color: var(--accent-teal); }
-
-    /* Chart cards */
-    .charts-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
-    @media (max-width: 600px) {
-      .charts-row { grid-template-columns: 1fr; }
-    }
-
-    .chart-card {
-      background: var(--bg-primary);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1rem 1.25rem;
-    }
-
-    .chart-card-title {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .chart-wrap {
-      position: relative;
-      width: 100%;
-      height: 220px;
-    }
-
-    /* State points */
-    .states-card {
-      background: var(--bg-primary);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1rem 1.25rem;
-    }
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .charts { grid-template-columns: 1fr; } }
+    .chart-wrap { position: relative; height: 210px; }
 
     .states-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
     }
-
-    @media (max-width: 600px) {
-      .states-grid { grid-template-columns: repeat(2, 1fr); }
+    .st-card { background: var(--bg2); border-radius: var(--r); padding: 8px 10px; }
+    .st-name {
+      font-size: 11px; font-weight: 500; color: var(--tx2);
+      margin-bottom: 4px; padding-bottom: 3px; border-bottom: 0.5px solid var(--bd);
     }
-
-    .state-card {
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      padding: 10px 12px;
-    }
-
-    .state-name {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-      padding-bottom: 4px;
-      border-bottom: 0.5px solid var(--border);
-    }
-
-    .state-row {
-      font-size: 12px;
-      color: var(--text-primary);
-      line-height: 1.8;
-    }
-
-    .state-row span {
-      color: var(--text-secondary);
-    }
-
-    /* Error */
-    .error-box {
-      display: none;
-      background: var(--danger-bg);
-      border: 0.5px solid var(--danger);
-      border-radius: var(--radius-md);
-      padding: 10px 14px;
-      font-size: 13px;
-      color: var(--danger);
-    }
-
-    /* Diagram */
-    .diagram-card {
-      background: var(--bg-primary);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1rem 1.25rem;
-    }
-
-    .cycle-diagram {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      padding: 0.5rem 0;
-      flex-wrap: wrap;
-    }
-
-    .cycle-component {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .cycle-box {
-      background: var(--bg-secondary);
-      border: 0.5px solid var(--border-med);
-      border-radius: var(--radius-md);
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-primary);
-      white-space: nowrap;
-    }
-
-    .cycle-arrow {
-      font-size: 18px;
-      color: var(--text-secondary);
-      padding: 0 4px;
-      line-height: 2.2;
-    }
-
-    .cycle-label {
-      font-size: 10px;
-      color: var(--text-secondary);
-    }
+    .st-row      { font-size: 12px; color: var(--tx); line-height: 1.9; }
+    .st-row span { color: var(--tx2); }
   </style>
 </head>
 <body>
-  <div class="page-wrapper">
-    <header>
-      <h1>Brayton cycle calculator</h1>
-      <p>Ideal air-standard Brayton cycle — adjust parameters to see real-time results</p>
-    </header>
+<div class="page">
+  <header>
+    <h1>Thermodynamic cycle calculator</h1>
+    <p>Configurable state points and process types — results update in real time</p>
+  </header>
 
-    <div class="layout">
-      <!-- Controls -->
-      <div class="controls-panel">
-        <div class="panel-title">Parameters</div>
+  <div class="preset-row">
+    <span class="preset-label">Presets:</span>
+    <button class="preset-btn" id="pre-brayton"  onclick="loadPreset('brayton')">Brayton</button>
+    <button class="preset-btn" id="pre-rankine"  onclick="loadPreset('rankine')">Rankine</button>
+    <button class="preset-btn" id="pre-otto"     onclick="loadPreset('otto')">Otto</button>
+    <button class="preset-btn" id="pre-diesel"   onclick="loadPreset('diesel')">Diesel</button>
+    <button class="preset-btn" id="pre-stirling" onclick="loadPreset('stirling')">Stirling</button>
+    <button class="preset-btn" id="pre-custom5"  onclick="loadPreset('custom5')">5-point custom</button>
+  </div>
 
+  <div class="layout">
+    <div class="left-col">
+      <div class="card">
+        <div class="section-label">Global parameters</div>
         <div class="slider-group">
           <div class="slider-header">
-            <span class="slider-label">Inlet pressure P₁</span>
-            <span><span class="slider-readout" id="v-P1">101</span><span class="slider-unit"> kPa</span></span>
+            <span class="slider-lbl">cₚ</span>
+            <span><span class="slider-val" id="disp-cp">1.005</span><span class="slider-unit"> kJ/(kg·K)</span></span>
           </div>
-          <input type="range" id="P1" min="50" max="500" step="1" value="101">
+          <input type="range" id="g-cp" min="0.5" max="2.5" step="0.005" value="1.005">
         </div>
-
         <div class="slider-group">
           <div class="slider-header">
-            <span class="slider-label">Inlet temperature T₁</span>
-            <span><span class="slider-readout" id="v-T1">300</span><span class="slider-unit"> K</span></span>
+            <span class="slider-lbl">γ</span>
+            <span><span class="slider-val" id="disp-gamma">1.40</span></span>
           </div>
-          <input type="range" id="T1" min="200" max="400" step="1" value="300">
+          <input type="range" id="g-gamma" min="1.05" max="1.80" step="0.01" value="1.40">
         </div>
-
         <div class="slider-group">
           <div class="slider-header">
-            <span class="slider-label">Max temperature T₃</span>
-            <span><span class="slider-readout" id="v-T3">1400</span><span class="slider-unit"> K</span></span>
+            <span class="slider-lbl">ṁ</span>
+            <span><span class="slider-val" id="disp-m">1.0</span><span class="slider-unit"> kg/s</span></span>
           </div>
-          <input type="range" id="T3" min="600" max="2000" step="10" value="1400">
+          <input type="range" id="g-m" min="0.5" max="20" step="0.5" value="1">
         </div>
-
-        <div class="slider-group">
-          <div class="slider-header">
-            <span class="slider-label">Pressure ratio rₚ</span>
-            <span><span class="slider-readout" id="v-rp">8.0</span></span>
-          </div>
-          <input type="range" id="rp" min="2" max="40" step="0.5" value="8">
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-header">
-            <span class="slider-label">Mass ṁ</span>
-            <span><span class="slider-readout" id="v-m">1.0</span><span class="slider-unit"> kg</span></span>
-          </div>
-          <input type="range" id="m" min="0.5" max="20" step="0.5" value="1">
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-header">
-            <span class="slider-label">Specific heat cₚ</span>
-            <span><span class="slider-readout" id="v-cp">1.005</span><span class="slider-unit"> kJ/(kg·K)</span></span>
-          </div>
-          <input type="range" id="cp" min="0.8" max="1.5" step="0.005" value="1.005">
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-header">
-            <span class="slider-label">Heat capacity ratio γ</span>
-            <span><span class="slider-readout" id="v-gamma">1.40</span></span>
-          </div>
-          <input type="range" id="gamma" min="1.1" max="1.8" step="0.01" value="1.40">
-        </div>
-
-        <div class="error-box" id="error-box"></div>
       </div>
 
-      <!-- Results -->
-      <div class="results">
+      <div class="card">
+        <div class="section-label">State points</div>
+        <div id="points-list"></div>
+        <button class="add-btn" onclick="addPoint()">
+          <i class="ti ti-plus" aria-hidden="true"></i> Add state point
+        </button>
+        <hr class="sep">
+        <div class="section-label">Processes</div>
+        <div id="procs-list"></div>
+        <p style="font-size:11px;color:var(--tx2);margin-top:4px">
+          Last process closes the cycle back to point 1. Leave P or T blank to auto-solve.
+        </p>
+      </div>
+    </div>
 
-        <!-- Cycle diagram -->
-        <div class="diagram-card">
-          <div class="chart-card-title">Cycle overview</div>
-          <div class="cycle-diagram">
-            <div class="cycle-component">
-              <div class="cycle-box">① Compressor inlet</div>
-              <div class="cycle-label">P₁, T₁</div>
-            </div>
-            <div class="cycle-arrow">→</div>
-            <div class="cycle-component">
-              <div class="cycle-box" style="border-color: var(--accent-blue); color: var(--accent-blue);">Compressor</div>
-              <div class="cycle-label">isentropic compression</div>
-            </div>
-            <div class="cycle-arrow">→</div>
-            <div class="cycle-component">
-              <div class="cycle-box">② Combustor inlet</div>
-              <div class="cycle-label">P₂, T₂</div>
-            </div>
-            <div class="cycle-arrow">→</div>
-            <div class="cycle-component">
-              <div class="cycle-box" style="border-color: #BA7517; color: #BA7517;">Combustor</div>
-              <div class="cycle-label">constant pressure heat add</div>
-            </div>
-            <div class="cycle-arrow">→</div>
-            <div class="cycle-component">
-              <div class="cycle-box">③ Turbine inlet</div>
-              <div class="cycle-label">P₃, T₃</div>
-            </div>
-            <div class="cycle-arrow">→</div>
-            <div class="cycle-component">
-              <div class="cycle-box" style="border-color: var(--accent-teal); color: var(--accent-teal);">Turbine</div>
-              <div class="cycle-label">isentropic expansion</div>
-            </div>
-            <div class="cycle-arrow">→</div>
-            <div class="cycle-component">
-              <div class="cycle-box">④ Exhaust</div>
-              <div class="cycle-label">P₄, T₄</div>
-            </div>
-          </div>
+    <div class="right-col">
+      <div class="error" id="error"></div>
+      <div class="metrics">
+        <div class="metric"><div class="mlabel">Net work Wₙₑₜ</div><div class="mval blue" id="r-Wnet">—</div></div>
+        <div class="metric"><div class="mlabel">Efficiency η</div><div class="mval teal" id="r-eta">—</div></div>
+        <div class="metric"><div class="mlabel">Heat in Qᵢₙ</div><div class="mval" id="r-Qin">—</div></div>
+        <div class="metric"><div class="mlabel">Heat out Qₒᵤₜ</div><div class="mval" id="r-Qout">—</div></div>
+        <div class="metric"><div class="mlabel">Turbine work Wₜ</div><div class="mval" id="r-Wt">—</div></div>
+        <div class="metric"><div class="mlabel">Compressor work Wc</div><div class="mval" id="r-Wc">—</div></div>
+        <div class="metric"><div class="mlabel">Back work ratio</div><div class="mval" id="r-bwr">—</div></div>
+        <div class="metric"><div class="mlabel">State points</div><div class="mval" id="r-pts">—</div></div>
+      </div>
+      <div class="charts">
+        <div class="card">
+          <div class="section-label">T-s diagram</div>
+          <div class="chart-wrap"><canvas id="ts-chart"></canvas></div>
         </div>
-
-        <!-- Metrics -->
-        <div class="metrics">
-          <div class="metric blue">
-            <div class="metric-label">Net work Wₙₑₜ</div>
-            <div class="metric-value" id="r-Wnet">—<span class="metric-unit">kJ</span></div>
-          </div>
-          <div class="metric teal">
-            <div class="metric-label">Thermal efficiency η</div>
-            <div class="metric-value" id="r-eta">—<span class="metric-unit">%</span></div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Turbine work Wₜ</div>
-            <div class="metric-value" id="r-Wt">—<span class="metric-unit">kJ</span></div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Compressor work Wc</div>
-            <div class="metric-value" id="r-Wc">—<span class="metric-unit">kJ</span></div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Heat added Qᵢₙ</div>
-            <div class="metric-value" id="r-Qin">—<span class="metric-unit">kJ</span></div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Heat rejected Qₒᵤₜ</div>
-            <div class="metric-value" id="r-Qout">—<span class="metric-unit">kJ</span></div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Back work ratio BWR</div>
-            <div class="metric-value" id="r-bwr">—<span class="metric-unit">%</span></div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">T₂ compressor outlet</div>
-            <div class="metric-value" id="r-T2">—<span class="metric-unit">K</span></div>
-          </div>
+        <div class="card">
+          <div class="section-label">P-v diagram</div>
+          <div class="chart-wrap"><canvas id="pv-chart"></canvas></div>
         </div>
-
-        <!-- Charts -->
-        <div class="charts-row">
-          <div class="chart-card">
-            <div class="chart-card-title">P-v diagram</div>
-            <div class="chart-wrap">
-              <canvas id="pv-chart" role="img" aria-label="Pressure vs specific volume diagram of the Brayton cycle"></canvas>
-            </div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-card-title">T-s diagram</div>
-            <div class="chart-wrap">
-              <canvas id="ts-chart" role="img" aria-label="Temperature vs entropy diagram of the Brayton cycle"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- State points -->
-        <div class="states-card">
-          <div class="chart-card-title">State points</div>
-          <div class="states-grid" id="states-grid"></div>
-        </div>
-
+      </div>
+      <div class="card">
+        <div class="section-label">State points</div>
+        <div class="states-grid" id="states-output"></div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const sliderConfig = {
-      P1:    { dp: 0 },
-      T1:    { dp: 0 },
-      T3:    { dp: 0 },
-      rp:    { dp: 1 },
-      m:     { dp: 1 },
-      cp:    { dp: 3 },
-      gamma: { dp: 2 },
-    };
+<script>
+  const SYMBOLS = '①②③④⑤⑥⑦⑧⑨';
 
-    Object.keys(sliderConfig).forEach(id => {
-      const el = document.getElementById(id);
-      el.addEventListener('input', () => {
-        const dp = sliderConfig[id].dp;
-        document.getElementById('v-' + id).textContent = parseFloat(el.value).toFixed(dp);
-        update();
-      });
+  const PROCESS_TYPES = [
+    { id: 'isentropic', label: 'Isentropic', tag: 'work' },
+    { id: 'isobaric',   label: 'Isobaric',   tag: 'heat' },
+    { id: 'isochoric',  label: 'Isochoric',  tag: 'heat' },
+    { id: 'isothermal', label: 'Isothermal', tag: 'both' },
+    { id: 'polytropic', label: 'Polytropic', tag: 'both' },
+  ];
+
+  const PRESETS = {
+    brayton: {
+      pts: [{P:101,T:300},{P:808,T:null},{P:808,T:1400},{P:101,T:null}],
+      ps:  ['isentropic','isobaric','isentropic','isobaric'],
+      cp:1.005, gamma:1.40, m:1
+    },
+    rankine: {
+      pts: [{P:10,T:320},{P:3000,T:null},{P:3000,T:600},{P:10,T:null}],
+      ps:  ['isentropic','isobaric','isentropic','isobaric'],
+      cp:2.0, gamma:1.13, m:1
+    },
+    otto: {
+      get pts() {
+        const r=8, g=1.40, T1=300, P1=101, T3=2400;
+        const T2=T1*Math.pow(r,g-1);
+        const P2=P1*Math.pow(r,g);
+        const P3=P2*T3/T2;
+        const T4=T3/Math.pow(r,g-1);
+        return [{P:P1,T:T1},{P:P2,T:T2},{P:P3,T:T3},{P:P1,T:T4}];
+      },
+      ps:['isentropic','isochoric','isentropic','isochoric'],
+      cp:0.718, gamma:1.40, m:1
+    },
+    diesel: {
+      get pts() {
+        const r=18, rc=2, g=1.40, T1=300, P1=101;
+        const T2=T1*Math.pow(r,g-1);
+        const P2=P1*Math.pow(r,g);
+        const T3=T2*rc;
+        const P3=P2;
+        const T4=T3*Math.pow(rc/r,g-1);
+        const P4=P3*Math.pow(rc/r,g);
+        return [{P:P1,T:T1},{P:P2,T:T2},{P:P3,T:T3},{P:P4,T:T4}];
+      },
+      ps:['isentropic','isobaric','isentropic','isochoric'],
+      cp:0.718, gamma:1.40, m:1
+    },
+    stirling: {
+      pts: [{P:101,T:300},{P:null,T:300},{P:null,T:900},{P:null,T:900}],
+      ps:  ['isothermal','isochoric','isothermal','isochoric'],
+      cp:0.718, gamma:1.40, m:1
+    },
+    custom5: {
+      pts: [{P:100,T:300},{P:500,T:null},{P:500,T:1200},{P:200,T:900},{P:100,T:null}],
+      ps:  ['isentropic','isobaric','polytropic','isobaric','isentropic'],
+      cp:1.005, gamma:1.40, m:1
+    },
+  };
+
+  let points = [];
+  let procs  = [];
+  let activePreset = null;
+  let tsChart, pvChart;
+
+  function loadPreset(name) {
+    const p = PRESETS[name];
+    const rawPts = p.pts;
+    points = rawPts.map(pt => ({ P: pt.P ?? null, T: pt.T ?? null }));
+    procs  = p.ps.map(tp => ({ type: tp, n: tp === 'polytropic' ? 1.3 : null }));
+
+    setSlider('g-cp',    'disp-cp',    p.cp,    3);
+    setSlider('g-gamma', 'disp-gamma', p.gamma, 2);
+    setSlider('g-m',     'disp-m',     p.m,     1);
+
+    activePreset = name;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pre-' + name).classList.add('active');
+
+    renderUI();
+  }
+
+  function setSlider(id, dispId, val, dp) {
+    document.getElementById(id).value = val;
+    document.getElementById(dispId).textContent = val.toFixed(dp);
+  }
+
+  const sliderCfg = [
+    { id: 'g-cp',    disp: 'disp-cp',    dp: 3 },
+    { id: 'g-gamma', disp: 'disp-gamma', dp: 2 },
+    { id: 'g-m',     disp: 'disp-m',     dp: 1 },
+  ];
+  sliderCfg.forEach(({ id, disp, dp }) => {
+    document.getElementById(id).addEventListener('input', function () {
+      document.getElementById(disp).textContent = parseFloat(this.value).toFixed(dp);
+      clearPreset();
+      update();
     });
+  });
 
-    function getStateVariables(P1, T1, T3, rp, cp, gamma) {
-      const P2 = P1 * rp, P3 = P2, P4 = P1;
-      const T2 = T1 * Math.pow(rp, (gamma - 1) / gamma);
-      const T4 = T3 / Math.pow(rp, (gamma - 1) / gamma);
-      const R = (gamma - 1) * cp / gamma;
-      return [
-        { P: P1, v: R * T1 / P1, T: T1 },
-        { P: P2, v: R * T2 / P2, T: T2 },
-        { P: P3, v: R * T3 / P3, T: T3 },
-        { P: P4, v: R * T4 / P4, T: T4 },
-      ];
+  function renderUI() { renderPoints(); renderProcs(); update(); }
+
+  function renderPoints() {
+    document.getElementById('points-list').innerHTML = points.map((pt, i) => `
+      <div class="point-row">
+        <span class="pt-sym">${SYMBOLS[i]}</span>
+        <span class="pt-lbl">P</span>
+        <input type="number" value="${pt.P != null ? pt.P.toFixed(1) : ''}" placeholder="auto" style="width:72px"
+          oninput="points[${i}].P = this.value==='' ? null : +this.value; clearPreset(); update()">
+        <span class="pt-lbl">T</span>
+        <input type="number" value="${pt.T != null ? pt.T.toFixed(1) : ''}" placeholder="auto" style="width:72px"
+          oninput="points[${i}].T = this.value==='' ? null : +this.value; clearPreset(); update()">
+        <span class="pt-unit">kPa/K</span>
+        ${points.length > 2
+          ? `<button class="del-btn" onclick="removePoint(${i})" aria-label="Remove state point ${i+1}"><i class="ti ti-x" aria-hidden="true"></i></button>`
+          : '<span style="width:24px"></span>'}
+      </div>`).join('');
+  }
+
+  function renderProcs() {
+    document.getElementById('procs-list').innerHTML = procs.map((pr, i) => {
+      const from = i + 1, to = (i + 1) % points.length + 1;
+      const t = PROCESS_TYPES.find(x => x.id === pr.type);
+      return `
+      <div class="proc-row">
+        <span class="proc-from">${from}→${to}</span>
+        <select onchange="procs[${i}].type=this.value; clearPreset(); renderProcs()">
+          ${PROCESS_TYPES.map(tp =>
+            `<option value="${tp.id}" ${tp.id===pr.type?'selected':''}>${tp.label}</option>`
+          ).join('')}
+        </select>
+        ${pr.type === 'polytropic'
+          ? `<span class="pt-lbl">n=</span>
+             <input type="number" value="${pr.n ?? 1.3}" step="0.05" style="width:58px"
+               oninput="procs[${i}].n=+this.value; clearPreset(); update()">`
+          : ''}
+        ${t ? `<span class="tag ${t.tag}">${t.tag==='work'?'work':t.tag==='heat'?'heat':'heat+work'}</span>` : ''}
+      </div>`;
+    }).join('');
+    update();
+  }
+
+  function clearPreset() {
+    if (!activePreset) return;
+    activePreset = null;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  }
+
+  function addPoint() {
+    points.push({ P: null, T: null });
+    procs.push({ type: 'isobaric', n: null });
+    clearPreset();
+    renderUI();
+  }
+
+  function removePoint(i) {
+    if (points.length <= 2) return;
+    points.splice(i, 1);
+    procs.splice(i, 1);
+    clearPreset();
+    renderUI();
+  }
+
+  function getR(cp, gamma) { return (gamma - 1) * cp / gamma; }
+
+  function solveStates(cp, gamma) {
+    const n = points.length;
+    const s = points.map(p => ({ P: p.P != null ? +p.P : null, T: p.T != null ? +p.T : null, v: null }));
+
+    function fwd(i) {
+      const j = (i+1)%n, f = s[i], t = s[j];
+      const tp = procs[i].type, pn = procs[i].n ?? 1.3;
+      if (!f.P || !f.T) return;
+      if (tp === 'isentropic') {
+        if (t.P != null && t.T == null) t.T = f.T * Math.pow(t.P/f.P, (gamma-1)/gamma);
+        if (t.T != null && t.P == null) t.P = f.P * Math.pow(t.T/f.T, gamma/(gamma-1));
+      } else if (tp === 'isobaric') {
+        if (t.P == null) t.P = f.P;
+      } else if (tp === 'isochoric') {
+        if (t.T != null && t.P == null) t.P = f.P * t.T / f.T;
+        if (t.P != null && t.T == null) t.T = f.T * t.P / f.P;
+      } else if (tp === 'isothermal') {
+        if (t.T == null) t.T = f.T;
+        if (t.P == null && f.P != null) t.P = f.P;
+      } else if (tp === 'polytropic') {
+        if (t.P != null && t.T == null) t.T = f.T * Math.pow(t.P/f.P, (pn-1)/pn);
+        if (t.T != null && t.P == null) t.P = f.P * Math.pow(t.T/f.T, pn/(pn-1));
+      }
     }
 
-    function getWork(m, cp, T1, T2, T3, T4) {
-      const Wc = m * cp * (T2 - T1);
-      const Wt = m * cp * (T3 - T4);
-      return { Wc, Wt, Wnet: Wt - Wc };
+    function bwd(i) {
+      const j = (i+1)%n, f = s[i], t = s[j];
+      const tp = procs[i].type, pn = procs[i].n ?? 1.3;
+      if (!t.P || !t.T) return;
+      if (tp === 'isentropic') {
+        if (f.P != null && f.T == null) f.T = t.T / Math.pow(t.P/f.P, (gamma-1)/gamma);
+        if (f.T != null && f.P == null) f.P = t.P / Math.pow(t.T/f.T, gamma/(gamma-1));
+      } else if (tp === 'isobaric') {
+        if (f.P == null) f.P = t.P;
+      } else if (tp === 'isochoric') {
+        if (f.T != null && f.P == null) f.P = t.P * f.T / t.T;
+        if (f.P != null && f.T == null) f.T = f.P * t.T / t.P;
+      } else if (tp === 'isothermal') {
+        if (f.T == null) f.T = t.T;
+      } else if (tp === 'polytropic') {
+        if (f.P != null && f.T == null) f.T = t.T / Math.pow(t.P/f.P, (pn-1)/pn);
+        if (f.T != null && f.P == null) f.P = t.P / Math.pow(t.T/f.T, pn/(pn-1));
+      }
     }
 
-    function getHeat(m, cp, T2, T3, T1, T4, Wc, Wt, Wnet) {
-      const Qin  = m * cp * (T3 - T2);
-      const Qout = m * cp * (T4 - T1);
-      return { Qin, Qout, eta: Wnet / Qin, bwr: Wc / Wt };
+    for (let it = 0; it < 20; it++) {
+      for (let i = 0; i < n; i++) fwd(i);
+      for (let i = n-1; i >= 0; i--) bwd(i);
     }
 
-    let pvChart, tsChart;
-
-    function isDark() {
-      return matchMedia('(prefers-color-scheme: dark)').matches;
+    const R = getR(cp, gamma);
+    for (let i = 0; i < n; i++) {
+      if (s[i].P != null && s[i].T != null) s[i].v = R * s[i].T / s[i].P;
     }
+    return s;
+  }
 
-    function chartColors() {
-      return {
-        text: isDark() ? '#9a9992' : '#6b6a65',
-        grid: isDark() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
-      };
-    }
+  function computeHeatWork(states, cp, gamma, m) {
+    const n = states.length;
+    const R = getR(cp, gamma);
+    let Qin=0, Qout=0, Wt=0, Wc=0;
 
-    function buildPvChart(states) {
-    const gamma = parseFloat(document.getElementById('gamma').value);
+    for (let i = 0; i < n; i++) {
+      const j = (i+1)%n;
+      const si=states[i], sj=states[j];
+      const tp=procs[i].type, pn=procs[i].n??1.3;
+      if (si.T==null||sj.T==null) continue;
+      const dT = sj.T - si.T;
+      let q=0, w=0;
 
-    const [s1, s2, s3, s4] = states;
-
-    function isentropicCurve(sA, sB, steps = 30) {
-        const C = sA.P * Math.pow(sA.v, gamma);
-        const vStart = sA.v;
-        const vEnd = sB.v;
-
-        const pts = [];
-        for (let i = 0; i <= steps; i++) {
-        const v = vStart + (vEnd - vStart) * (i / steps);
-        const P = C / Math.pow(v, gamma);
-        pts.push({ x: v, y: P });
+      if (tp==='isentropic') {
+        w = m * cp * dT;
+      } else if (tp==='isobaric') {
+        q = m * cp * dT;
+      } else if (tp==='isochoric') {
+        q = m * (cp - R) * dT;
+      } else if (tp==='isothermal') {
+        if (si.P!=null&&sj.P!=null&&si.P>0&&sj.P>0) {
+          w = -m * R * si.T * Math.log(sj.P/si.P);
+          q = w;
         }
-        return pts;
+      } else if (tp==='polytropic') {
+        w = m * R * dT / (1 - pn);
+        q = m * (cp - pn * R / (pn-1)) * dT;
+      }
+
+      if (q > 0) Qin  += q; else Qout += Math.abs(q);
+      if (w < 0) Wc   += Math.abs(w);
+      else        Wt   += w;
     }
 
-    function isobaricLine(sA, sB, steps = 30) {
-        const pts = [];
-        for (let i = 0; i <= steps; i++) {
-        const v = sA.v + (sB.v - sA.v) * (i / steps);
-        pts.push({ x: v, y: sA.P });
+    const Wnet = Qin - Qout;
+    const eta  = Qin > 0 ? Wnet / Qin : 0;
+    const bwr  = Wt  > 0 ? Wc / Wt    : 0;
+    return { Qin, Qout, Wnet, Wt, Wc, eta, bwr };
+  }
+
+  function getTsPoints(states, cp, gamma) {
+    const n=states.length, R=getR(cp,gamma), pts=[];
+    let s=0;
+    for (let i=0;i<n;i++) {
+      const j=(i+1)%n, si=states[i], sj=states[j];
+      const tp=procs[i].type, steps=24;
+      if (si.T==null||sj.T==null) continue;
+      pts.push({x:s,y:si.T});
+      if (tp==='isentropic') {
+        pts.push({x:s,y:sj.T});
+      } else if (tp==='polytropic') {
+        const pn=procs[i].n??1.3;
+        const cv=cp-R;
+        const ds=cv*(pn-gamma)/(pn-1)*Math.log(sj.T/si.T);
+        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T+(sj.T-si.T)*k/steps});
+        s+=ds;
+      } else if (tp==='isobaric') {
+        const ds=cp*Math.log(sj.T/si.T);
+        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T+(sj.T-si.T)*k/steps});
+        s+=ds;
+      } else if (tp==='isochoric') {
+        const ds=(cp-R)*Math.log(sj.T/si.T);
+        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T+(sj.T-si.T)*k/steps});
+        s+=ds;
+      } else if (tp==='isothermal'&&si.P!=null&&sj.P!=null&&si.P>0&&sj.P>0) {
+        const ds=-R*Math.log(sj.P/si.P);
+        for (let k=1;k<=steps;k++) pts.push({x:s+ds*k/steps, y:si.T});
+        s+=ds;
+      }
+    }
+    if (pts.length) pts.push({...pts[0]});
+    return pts;
+  }
+
+  function getTsDots(states, cp, gamma) {
+    const n=states.length, R=getR(cp,gamma), dots=[];
+    let s=0;
+    for (let i=0;i<n;i++) {
+      const j=(i+1)%n, si=states[i], sj=states[j], tp=procs[i].type;
+      if (si.T==null) continue;
+      dots.push({x:s,y:si.T});
+      if (sj.T==null) continue;
+      if (tp==='isobaric')  s+=cp*Math.log(sj.T/si.T);
+      else if (tp==='isochoric') s+=(cp-R)*Math.log(sj.T/si.T);
+      else if (tp==='isothermal'&&si.P!=null&&sj.P!=null&&si.P>0&&sj.P>0) s+=-R*Math.log(sj.P/si.P);
+      else if (tp==='polytropic'&&si.T>0&&sj.T>0) {
+        const pn=procs[i].n??1.3;
+        s+=(cp-R)*(pn-gamma)/(pn-1)*Math.log(sj.T/si.T);
+      }
+    }
+    return dots;
+  }
+
+  function getPvPoints(states, gamma) {
+    const n=states.length, pts=[];
+    for (let i=0;i<n;i++) {
+      const j=(i+1)%n, si=states[i], sj=states[j];
+      const tp=procs[i].type, pn=procs[i].n??1.3, steps=24;
+      if (si.v==null||sj.v==null||si.P==null||sj.P==null) continue;
+      pts.push({x:si.v,y:si.P});
+      if (tp==='isentropic'||tp==='polytropic') {
+        const exp=tp==='isentropic'?gamma:pn, C=si.P*Math.pow(si.v,exp);
+        for (let k=1;k<=steps;k++) {
+          const v=si.v+(sj.v-si.v)*k/steps;
+          pts.push({x:v, y:C/Math.pow(v,exp)});
         }
-        return pts;
+      } else if (tp==='isobaric') {
+        for (let k=1;k<=steps;k++) pts.push({x:si.v+(sj.v-si.v)*k/steps, y:si.P});
+      } else if (tp==='isochoric') {
+        for (let k=1;k<=steps;k++) pts.push({x:si.v, y:si.P+(sj.P-si.P)*k/steps});
+      } else if (tp==='isothermal') {
+        const C=si.P*si.v;
+        for (let k=1;k<=steps;k++) {
+          const v=si.v+(sj.v-si.v)*k/steps;
+          pts.push({x:v, y:C/v});
+        }
+      }
     }
+    if (pts.length) pts.push({...pts[0]});
+    return pts;
+  }
 
-    // smooth cycle curve
-    const curve = [
-        ...isentropicCurve(s1, s2),
-        ...isobaricLine(s2, s3),
-        ...isentropicCurve(s3, s4),
-        ...isobaricLine(s4, s1),
-        { x: s1.v, y: s1.P }
-    ];
+  const isDark = () => matchMedia('(prefers-color-scheme:dark)').matches;
+  const gc     = () => ({
+    text: isDark() ? '#9a9992' : '#6b6a65',
+    grid: isDark() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
+  });
 
-    // EXACT state points (always synced)
-    const points = [
-        { x: s1.v, y: s1.P },
-        { x: s2.v, y: s2.P },
-        { x: s3.v, y: s3.P },
-        { x: s4.v, y: s4.P }
-    ];
-
-    const c = chartColors();
-
-    const dataset = [
-        {
-        data: curve,
-        borderColor: '#185FA5',
-        borderWidth: 2,
-        pointRadius: 0,
-        fill: false
+  function initCharts() {
+    const c = gc();
+    const scaleOpts = (xLbl, yLbl, xDp, yDp) => ({
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { type:'linear',
+          title: { display:true, text:xLbl, color:c.text, font:{size:11} },
+          ticks: { color:c.text, font:{size:10}, callback: v=>v.toFixed(xDp) },
+          grid:  { color:c.grid }
         },
-        {
-        data: points,
-        showLine: false,
-        pointRadius: 6,
-        pointHoverRadius: 7,
-        pointBackgroundColor: '#185FA5',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2
+        y: {
+          title: { display:true, text:yLbl, color:c.text, font:{size:11} },
+          ticks: { color:c.text, font:{size:10}, callback: v=>v.toFixed(yDp) },
+          grid:  { color:c.grid }
         }
-    ];
-
-    if (pvChart) {
-        pvChart.data.datasets = dataset;   // 🔥 full replace (important)
-        pvChart.update('none');
-        return;
-    }
-
-    pvChart = new Chart(document.getElementById('pv-chart'), {
-        type: 'line',
-        data: { datasets: dataset },
-        options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: {
-            type: 'linear',
-            title: { display: true, text: 'Specific volume v (m³/kg)', color: c.text },
-            ticks: { color: c.text, callback: v => v.toFixed(3) },
-            grid: { color: c.grid }
-            },
-            y: {
-            title: { display: true, text: 'Pressure P (kPa)', color: c.text },
-            ticks: { color: c.text },
-            grid: { color: c.grid }
-            }
-        }
-        }
+      }
     });
-    }
-
-    function buildTsChart(states) {
-    const cpVal = parseFloat(document.getElementById('cp').value);
-
-    const T1 = states[0].T;
-    const T2 = states[1].T;
-    const T3 = states[2].T;
-    const T4 = states[3].T;
-
-    // guard against invalid math
-    if ([T1, T2, T3, T4].some(t => !isFinite(t) || t <= 0)) return;
-
-    const s1 = 0;
-    const s2 = s1;
-    const s3 = s2 + cpVal * Math.log(T3 / T2);
-    const s4 = s3;
-    const s0 = s4 + cpVal * Math.log(T1 / T4);
-
-    const data = [
-        { x: s1, y: T1 },
-        { x: s2, y: T2 },
-        { x: s3, y: T3 },
-        { x: s4, y: T4 },
-        { x: s0, y: T1 }
-    ];
-
-    const c = chartColors();
-
-    if (tsChart) {
-        tsChart.data.datasets[0].data = data;
-        tsChart.update('none');
-        return;
-    }
 
     tsChart = new Chart(document.getElementById('ts-chart'), {
-        type: 'line',
-        data: {
-        datasets: [{
-            data,
-            borderColor: '#0F6E56',
-            backgroundColor: 'rgba(15,110,86,0.08)',
-            fill: false,
-            pointRadius: 4,
-            pointBackgroundColor: '#0F6E56',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2
-        }]
-        },
-        options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: {
-            type: 'linear',
-            title: { display: true, text: 'Entropy s (kJ/kg·K)', color: c.text, font: { size: 11 } },
-            ticks: { color: c.text, font: { size: 11 }, callback: v => v.toFixed(2) },
-            grid: { color: c.grid }
-            },
-            y: {
-            title: { display: true, text: 'Temperature T (K)', color: c.text, font: { size: 11 } },
-            ticks: { color: c.text, font: { size: 11 } },
-            grid: { color: c.grid }
-            }
-        }
-        }
+      type: 'line',
+      data: { datasets: [
+        { data:[], borderColor:'#0F6E56', borderWidth:2, pointRadius:0, fill:false },
+        { data:[], showLine:false, pointRadius:5, pointBackgroundColor:'#0F6E56', pointBorderColor:'#fff', pointBorderWidth:2 }
+      ]},
+      options: scaleOpts('Entropy s (kJ/kg·K)', 'Temperature T (K)', 2, 0)
     });
+
+    pvChart = new Chart(document.getElementById('pv-chart'), {
+      type: 'line',
+      data: { datasets: [
+        { data:[], borderColor:'#185FA5', borderWidth:2, pointRadius:0, fill:false },
+        { data:[], showLine:false, pointRadius:5, pointBackgroundColor:'#185FA5', pointBorderColor:'#fff', pointBorderWidth:2 }
+      ]},
+      options: scaleOpts('Specific volume v (m³/kg)', 'Pressure P (kPa)', 3, 0)
+    });
+  }
+
+  function update() {
+    const cp    = parseFloat(document.getElementById('g-cp').value);
+    const gamma = parseFloat(document.getElementById('g-gamma').value);
+    const m     = parseFloat(document.getElementById('g-m').value);
+    const err   = document.getElementById('error');
+    if (!isFinite(cp)||!isFinite(gamma)||!isFinite(m)) return;
+
+    let states;
+    try { states = solveStates(cp, gamma); }
+    catch(e) { err.style.display='block'; err.textContent='⚠ '+e.message; return; }
+
+    const unsolved = states.filter(s => s.P==null||s.T==null);
+    if (unsolved.length) {
+      err.style.display='block';
+      err.textContent=`⚠ Could not fully solve — ${unsolved.length} state point(s) undetermined. Specify more P or T values.`;
+    } else {
+      err.style.display='none';
     }
 
-    function update() {
-      const P1    = parseFloat(document.getElementById('P1').value);
-      const T1    = parseFloat(document.getElementById('T1').value);
-      const T3    = parseFloat(document.getElementById('T3').value);
-      const rp    = parseFloat(document.getElementById('rp').value);
-      const m     = parseFloat(document.getElementById('m').value);
-      const cp    = parseFloat(document.getElementById('cp').value);
-      const gamma = parseFloat(document.getElementById('gamma').value);
-      const errBox = document.getElementById('error-box');
+    const { Qin, Qout, Wnet, Wt, Wc, eta, bwr } = computeHeatWork(states, cp, gamma, m);
+    const fmt = (v, dp=1, unit='') => isFinite(v) ? v.toFixed(dp)+(unit?' '+unit:'') : '—';
 
-      let states;
-      try {
-        states = getStateVariables(P1, T1, T3, rp, cp, gamma);
-      } catch(e) {
-        errBox.style.display = 'block';
-        errBox.textContent = '⚠ ' + e.message;
-        return;
-      }
+    document.getElementById('r-Wnet').textContent = fmt(Wnet,1,'kJ');
+    document.getElementById('r-eta').textContent  = isFinite(eta) ? (eta*100).toFixed(2)+'%' : '—';
+    document.getElementById('r-Qin').textContent  = fmt(Qin,1,'kJ');
+    document.getElementById('r-Qout').textContent = fmt(Qout,1,'kJ');
+    document.getElementById('r-Wt').textContent   = fmt(Wt,1,'kJ');
+    document.getElementById('r-Wc').textContent   = fmt(Wc,1,'kJ');
+    document.getElementById('r-bwr').textContent  = isFinite(bwr) ? (bwr*100).toFixed(1)+'%' : '—';
+    document.getElementById('r-pts').textContent  = points.length;
 
-      const T2 = states[1].T, T4 = states[3].T;
+    document.getElementById('states-output').innerHTML = states.map((s,i) => `
+      <div class="st-card">
+        <div class="st-name">${SYMBOLS[i]} State ${i+1}</div>
+        <div class="st-row"><span>P =</span> ${s.P!=null?s.P.toFixed(1)+' kPa':'—'}</div>
+        <div class="st-row"><span>T =</span> ${s.T!=null?s.T.toFixed(1)+' K':'—'}</div>
+        <div class="st-row"><span>v =</span> ${s.v!=null?s.v.toFixed(4)+' m³/kg':'—'}</div>
+      </div>`).join('');
 
-      if (T3 <= T2) {
-        errBox.style.display = 'block';
-        errBox.textContent = `⚠ T₃ must be greater than T₂ (${T2.toFixed(1)} K). Increase T₃ or reduce the pressure ratio.`;
-        return;
-      }
-      errBox.style.display = 'none';
+    const tsPts  = getTsPoints(states, cp, gamma);
+    const tsDots = getTsDots(states, cp, gamma);
+    tsChart.data.datasets[0].data = tsPts;
+    tsChart.data.datasets[1].data = tsDots;
+    tsChart.update('none');
 
-      const { Wc, Wt, Wnet } = getWork(m, cp, T1, T2, T3, T4);
-      const { Qin, Qout, eta, bwr } = getHeat(m, cp, T2, T3, T1, T4, Wc, Wt, Wnet);
+    const pvPts  = getPvPoints(states, gamma);
+    const pvDots = states.filter(s=>s.v!=null&&s.P!=null).map(s=>({x:s.v,y:s.P}));
+    pvChart.data.datasets[0].data = pvPts;
+    pvChart.data.datasets[1].data = pvDots;
+    pvChart.update('none');
+  }
 
-      const mu = u => `<span class="metric-unit">${u}</span>`;
-      document.getElementById('r-Wnet').innerHTML = Wnet.toFixed(1) + mu(' kJ');
-      document.getElementById('r-eta').innerHTML  = (eta * 100).toFixed(2) + mu(' %');
-      document.getElementById('r-Wt').innerHTML   = Wt.toFixed(1) + mu(' kJ');
-      document.getElementById('r-Wc').innerHTML   = Wc.toFixed(1) + mu(' kJ');
-      document.getElementById('r-Qin').innerHTML  = Qin.toFixed(1) + mu(' kJ');
-      document.getElementById('r-Qout').innerHTML = Qout.toFixed(1) + mu(' kJ');
-      document.getElementById('r-bwr').innerHTML  = (bwr * 100).toFixed(2) + mu(' %');
-      document.getElementById('r-T2').innerHTML   = T2.toFixed(1) + mu(' K');
-
-      const stateNames = ['① Compressor inlet', '② Compressor outlet', '③ Turbine inlet', '④ Turbine outlet'];
-      document.getElementById('states-grid').innerHTML = states.map((s, i) => `
-        <div class="state-card">
-          <div class="state-name">${stateNames[i]}</div>
-          <div class="state-row"><span>P =</span> ${s.P.toFixed(1)} kPa</div>
-          <div class="state-row"><span>T =</span> ${s.T.toFixed(1)} K</div>
-          <div class="state-row"><span>v =</span> ${s.v.toFixed(4)} m³/kg</div>
-        </div>`).join('');
-
-      buildPvChart(states);
-      buildTsChart(states);
-    }
-
-    update();
-  </script>
+  initCharts();
+  loadPreset('brayton');
+</script>
 </body>
 </html>
