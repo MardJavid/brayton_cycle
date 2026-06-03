@@ -413,13 +413,12 @@
     document.getElementById('points-list').innerHTML = points.map((pt, i) => `
       <div class="point-row">
         <span class="pt-idx">${i + 1}</span>
-        <span class="pt-lbl">P</span>
+        <span class="pt-lbl">P (kPa) </span>
         <input type="number" value="${pt.P != null ? pt.P.toFixed(1) : ''}" placeholder="auto" style="width:72px"
           oninput="points[${i}].P = this.value==='' ? null : +this.value; clearPreset(); update()">
-        <span class="pt-lbl">T</span>
+        <span class="pt-lbl">T (K)</span>
         <input type="number" value="${pt.T != null ? pt.T.toFixed(1) : ''}" placeholder="auto" style="width:72px"
           oninput="points[${i}].T = this.value==='' ? null : +this.value; clearPreset(); update()">
-        <span class="pt-unit">kPa/K</span>
         ${points.length > 2
           ? `<button class="del-btn" onclick="removePoint(${i})" aria-label="Remove state point ${i+1}"><i class="ti ti-x" aria-hidden="true"></i></button>`
           : '<span style="width:24px"></span>'}
